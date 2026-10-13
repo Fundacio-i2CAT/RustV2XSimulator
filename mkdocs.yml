@@ -1,0 +1,101 @@
+site_name: RustV2XSimulator
+site_description: High-Performance, Modular Discrete-Event Simulation Framework for Vehicular Communications (V2X) and ETSI C-ITS in Rust
+site_author: Jordi Marias
+repo_name: Fundacio-i2CAT/RustV2XSimulator
+repo_url: https://github.com/Fundacio-i2CAT/RustV2XSimulator
+
+theme:
+  name: material
+  language: en
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.arithmatex:
+      generic: true
+  - tables
+  - attr_list
+  - md_in_html
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - javascripts/tex-mml-svg.js
+  - javascripts/mermaid.min.js
+
+validation:
+  links:
+    not_found: ignore
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting_started/installation.md
+      - Quickstart Guide: getting_started/quickstart.md
+      - Developer & Integration Guide: getting_started/developer_guide.md
+  - Architecture:
+      - Core DES Engine: architecture/overview.md
+      - PHY & MAC Architecture: architecture/phy_and_mac_architecture.md
+      - Pluggable Wireless Trait: architecture/trait_abstraction.md
+      - Performance vs OMNeT++: architecture/performance_vs_omnetpp.md
+      - Mobility & SUMO TraCI: architecture/mobility_engine.md
+      - C-ITS Protocol Stack: architecture/cits_stack.md
+      - Congestion, Collisions & DES: architecture/congestion_collisions_and_des.md
+  - Wireless Technologies:
+      - IEEE 802.11p DSRC: technologies/dsrc_80211p.md
+      - IEEE 802.11bd Next-Gen V2X: technologies/wifi80211bd.md
+      - 3GPP C-V2X PC5 Mode 4: technologies/cv2x_pc5_mode4.md
+      - 3GPP 5G NR-V2X Sidelink Mode 2: technologies/nr_v2x_mode2.md
+      - MCS & Bandwidth Analysis: technologies/mcs_analysis.md
+      - Parametric Empirical Model: technologies/parametric_legacy.md
+  - Configuration:
+      - TOML Reference: configuration/toml_reference.md
+      - CLI Reference: configuration/cli_reference.md
+  - Academic Validation:
+      - ns-3 & Veins Cross-Validation: validation/ns3_veins_parity.md
+      - Veins & Artery Parity & Architecture: validation/veins_artery_parity.md
+      - 5G-LENA & UWICORE NR-V2X Parity: validation/5glena_uwicore_nr_v2x_parity.md
+  - Propagation Models:
+      - Dual-Slope Model & 3GPP TR 38.901 Audit: propagation/dual_slope_model.md

@@ -1,0 +1,61 @@
+[scenario]
+name = "env3_monaco"
+net_file = "scenarios/diagonal/osm.net.xml"
+poly_file = "scenarios/diagonal/osm.poly.xml"
+
+[simulation]
+duration = 60.0
+time_step = 0.01
+seed = 42
+workload = "cam"
+
+[mobility]
+mode = "synthetic_urban"
+nodes = 250
+min_speed = 3.0
+max_speed = 11.11
+acceleration = 2.0
+deceleration = 4.5
+
+[phy]
+model = "dualslope"
+carrier_frequency_hz = 5.9e9
+bandwidth_hz = 10.0e6
+tx_power_dbm = 23.0
+noise_floor_dbm = -99.0
+d_break = 120.0
+gamma1 = 2.05
+gamma2 = 3.90
+sigma_los = 3.1
+sigma_nlos = 8.3
+capture_threshold_db = 4.0
+building_attenuation_db_per_m = 0.85
+max_building_attenuation_db = 45.0
+
+[mac]
+mode = "edca"
+cca_threshold_dbm = -85.0
+slot_time_us = 13.0
+sifs_us = 32.0
+cbr_window_s = 0.100
+
+[dcc]
+mode = "limeric"
+target_cbr = 0.68
+alpha = 0.016
+beta = 0.0012
+min_rate_hz = 2.0
+max_rate_hz = 10.0
+
+[actuation]
+mode = "krauss_substep"
+max_decel = 6.0
+reaction_time_s = 0.1
+min_gap_m = 2.5
+
+[metrics]
+output_dir = "results/env3_monaco/"
+export_csv = true
+export_json = true
+export_parquet = false
+enable_pcap = false

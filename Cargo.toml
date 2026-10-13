@@ -1,0 +1,85 @@
+[package]
+name = "rustv2xsimulator"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85.0"
+authors = ["Jordi Marias-i-Parella <jordi.marias@i2cat.net>"]
+description = "A High-Performance Discrete-Event Simulation Framework for ETSI C-ITS in Rust"
+license = "AGPL-3.0"
+readme = "README.md"
+repository = "https://github.com/Fundacio-i2CAT/RustV2XSimulator"
+keywords = ["v2x", "c-its", "simulation", "etsi", "vehicular-networks"]
+categories = ["simulation", "science", "network-programming"]
+exclude = [
+    "ignore/",
+    "results/",
+    "site/"
+]
+
+[lib]
+name = "rustv2xsimulator"
+path = "src/lib.rs"
+
+[[example]]
+name = "cam_simulation"
+path = "examples/cam_simulation.rs"
+
+[dependencies]
+# Parallel execution & Channels
+rayon = "1.10"
+crossbeam = "0.8"
+crossbeam-channel = "0.5"
+rustflexstack = "0.3.4"
+rasn = "0.26"
+sumo-traci = { package = "traci-rs", version = "0.2" }
+
+# Spatial, Numerical & Geometry
+ordered-float = "4.2"
+kd-tree = "0.6"
+utm = "0.1"
+rand = "0.8"
+rand_distr = "0.4"
+
+# Configuration, Serialization & Compression
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+byteorder = "1.5"
+zstd = "0.13"
+quick-xml = { version = "0.36", features = ["serialize"] }
+
+# CLI & Observability
+clap = { version = "4.5", features = ["derive"] }
+log = "0.4"
+env_logger = "0.11"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3.10"
+assert_approx_eq = "1.1"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+debug = false
+overflow-checks = false
+
+[profile.bench]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+debug = true
+
+[[bench]]
+name = "scheduler_bench"
+harness = false
+
+[[bench]]
+name = "geometry_bench"
+harness = false
+
+[[bench]]
+name = "sinr_bench"
+harness = false

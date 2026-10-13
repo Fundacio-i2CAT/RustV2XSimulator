@@ -1,0 +1,197 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{enumitem}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=green!50!black,
+    urlcolor=blue!70!black
+}
+
+\title{\textbf{Congestion-Induced Losses, Simultaneous Transmissions, and Discrete-Event Scheduling in RustV2XSimulator:\\
+Mathematical Modeling and Physical-Layer Parity}}
+
+\author{
+    \textbf{RustV2XSimulator Engineering \& Academic Research Documentation} \\
+    Autonomous Systems \& Vehicular Networks Simulation Framework
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+In vehicular communications (V2X), high node density creates severe channel contention, packet collisions, and queuing degradation. In this paper, we formalize the exact mechanisms by which congestion-related losses, simultaneous transmissions, and discrete-event simulation (DES) scheduling operate within \texttt{rustv2xsimulator}. We analyze the cross-layer interplay between ETSI Decentralized Congestion Control (DCC), IEEE 802.11p Enhanced Distributed Channel Access (EDCA) backoff countdowns, and the physical medium. We then provide a mathematical formulation of simultaneous on-air collisions, detailing the piecewise-constant SINR chunking algorithm and receiver capture threshold ($\gamma_{\mathrm{cap}} = 4.0\,\mathrm{dB}$) matching the ns-3 v3.42 \texttt{InterferenceHelper} architecture. Finally, we dissect the $O(1)$ Calendar Queue event loop, contrasting the microsecond-level physical modeling of transmission duration with the approximation of electromagnetic propagation delay.
+\end{abstract}
+
+\section{Introduction}
+Vehicular ad-hoc networks (VANETs) rely predominantly on uncoordinated, single-hop broadcast (SHB) communications to disseminate Cooperative Awareness Messages (CAM) and Decentralized Environmental Notification Messages (DENM). The absence of positive acknowledgements (ACKs) and request-to-send / clear-to-send (RTS/CTS) channel reservations means that when local vehicle density increases, simultaneous transmissions and channel congestion inevitably occur.
+
+In discrete-event simulation (DES), capturing these dynamics with mathematical fidelity while processing millions of events per second requires tight coupling between:
+\begin{enumerate}[noitemsep]
+    \item Multi-access contention and backoff timers at the MAC layer.
+    \item Piecewise-constant cumulative interference tracking at the Physical layer.
+    \item High-performance, monotonic event scheduling in the simulation kernel.
+\end{enumerate}
+
+\section{Congestion-Related Loss Mechanisms}
+
+Congestion manifests across three distinct layers:
+
+\subsection{Facilities \& Congestion Control Layer}
+Vehicular nodes monitor the local Channel Busy Ratio ($CBR$) across rolling $100\,\mathrm{ms}$ measurement windows:
+\begin{equation}
+CBR = \frac{T_{\mathrm{busy}}}{T_{\mathrm{window}}} = \frac{1}{T_{\mathrm{window}}} \int_{t-T_{\mathrm{window}}}^t \mathbb{I}_{\{\text{CCA Busy}\}}(\tau) \, d\tau
+\end{equation}
+
+When $CBR$ rises above standard thresholds, ETSI TS 102 687 DCC limits transmission frequency:
+\begin{itemize}[noitemsep]
+    \item \textbf{Reactive DCC FSM:} Table A.1 defines seven distinct states where packet generation interval $T_{\mathrm{off}}$ expands from $60\,\mathrm{ms}$ (Relaxed) up to $460\,\mathrm{ms}$ (Restrictive).
+    \item \textbf{LIMERIC DCC:} Dual-regime linear adaptive rate control dynamically adapts generation probability to converge towards target $CBR^* = 0.68$:
+    \begin{equation}
+    r(t) = (1 - \alpha) r(t-1) + \beta \left( CBR^* - CBR(t-1) \right)
+    \end{equation}
+\end{itemize}
+Under heavy traffic, packets are not necessarily dropped on air; rather, generation is throttled, increasing message latency and Age of Information (AoI).
+
+\subsection{MAC Layer Contention \& Collision}
+In IEEE 802.11p EDCA, before transmitting, a station must sense the medium idle for an Arbitrated Inter-Frame Space:
+\begin{equation}
+\mathrm{AIFS}[\mathrm{AC}] = \mathrm{SIFS} + \mathrm{AIFSN}[\mathrm{AC}] \times T_{\mathrm{slot}}
+\end{equation}
+where $\mathrm{SIFS} = 32\,\mu\mathrm{s}$ and $T_{\mathrm{slot}} = 13\,\mu\mathrm{s}$.
+
+The station then draws a discrete backoff counter $k \sim \mathcal{U}[0, CW_{\mathrm{min}}]$ and decrements $k$ for each idle slot. If the energy detected exceeds the Clear Channel Assessment (CCA) threshold ($-85.0\,\mathrm{dBm}$), the backoff timer freezes.
+However, because all broadcasts are uncoordinated, collisions occur whenever:
+\begin{enumerate}[noitemsep]
+    \item Two nearby nodes conclude their backoff countdown during the exact same time slot.
+    \item Two transmitters are hidden terminals (outside mutual carrier sense range, but overlapping at a common receiver).
+\end{enumerate}
+
+\section{Simulation of Simultaneous Transmissions}
+
+When two or more stations transmit concurrently, their electromagnetic wavefronts superpose at the receiver antenna. \texttt{rustv2xsimulator} resolves this through \textbf{Chunked Cumulative SINR Tracking} in \texttt{CumulativeInterferenceTracker}.
+
+\subsection{Piecewise-Constant Temporal Chunking}
+Let the desired signal from Station $A$ arrive with power $P_A$ (Watts) over time interval $[t_{\mathrm{start}}, t_{\mathrm{end}}]$. Concurrently, $K$ interfering signals $j \in \{1, \dots, K\}$ are active over intervals $[t_{\mathrm{start}, j}, t_{\mathrm{end}, j}]$ with received powers $P_j$.
+
+The simulation engine extracts the set of critical boundary transition timestamps:
+\begin{equation}
+\mathcal{T} = \mathrm{sort}\left( \{t_{\mathrm{start}}, t_{\mathrm{end}}\} \cup \{ t_{\mathrm{start}, j}, t_{\mathrm{end}, j} \mid [t_{\mathrm{start}, j}, t_{\mathrm{end}, j}] \cap [t_{\mathrm{start}}, t_{\mathrm{end}}] \neq \emptyset \} \right)
+\end{equation}
+Deduplicating $\mathcal{T}$ partitions $[t_{\mathrm{start}}, t_{\mathrm{end}}]$ into $M$ disjoint time intervals $[t_m, t_{m+1}]$ with duration $\Delta t_m = t_{m+1} - t_m$.
+
+Within each chunk $m$, total interference power $I_m$ is constant:
+\begin{equation}
+I_m = \sum_{j \in \text{interferers active at } t_{\mathrm{mid}, m}} P_j
+\end{equation}
+where $t_{\mathrm{mid}, m} = \frac{t_m + t_{m+1}}{2}$.
+
+The instantaneous Signal-to-Interference-plus-Noise Ratio is:
+\begin{equation}
+\mathrm{SINR}_m = \frac{P_A}{I_m + N_0}
+\end{equation}
+where $N_0 = -99.0\,\mathrm{dBm} \approx 1.2589 \times 10^{-13}\,\mathrm{W}$.
+
+\subsection{Receiver Capture Effect ($\gamma_{\mathrm{cap}} = 4.0\,\mathrm{dB}$)}
+Physical radio demodulators can lock onto a stronger signal despite overlapping interference if the Signal-to-Interference Ratio exceeds the receiver capture threshold:
+\begin{equation}
+\mathrm{SIR}_m = 10 \log_{10}\left( \frac{P_A}{I_m} \right)
+\end{equation}
+\begin{itemize}[noitemsep]
+    \item \textbf{Destructive Collision:} If $I_m > 0$, $\mathrm{SIR}_m < 4.0\,\mathrm{dB}$, and $\mathrm{SINR}_m < 6.0\,\mathrm{dB}$, the receiver loses frame synchronization:
+    \begin{equation}
+    \mathrm{PSR}_m = 0.0 \implies \mathrm{PSR}_{\mathrm{overall}} = 0.0
+    \end{equation}
+    The packet is dropped immediately.
+    \item \textbf{Capture Success:} If $\mathrm{SIR}_m \ge 4.0\,\mathrm{dB}$, the receiver captures Station $A$'s preamble despite the simultaneous transmission from Station $B$. Station $B$'s packet is destroyed, but Station $A$'s frame is decoded.
+\end{itemize}
+
+\subsection{Analytical Frame Error Decoding}
+For surviving packets, each chunk's Packet Error Rate ($\mathrm{PER}_m$) is evaluated against the NIST analytical QPSK 1/2 convolutional coding model:
+\begin{equation}
+\mathrm{PSR}_{\mathrm{overall}} = \prod_{m=1}^M \left( 1 - \mathrm{PER}_m(\mathrm{SINR}_m) \right)
+\end{equation}
+A uniform pseudorandom draw $u \sim \mathcal{U}[0, 1)$ completes Monte Carlo decoding ($u < \mathrm{PSR}_{\mathrm{overall}}$).
+
+\section{Discrete-Event Scheduling in DES}
+
+The simulation engine coordinates time advance using a multi-bucket $O(1)$ amortized \textbf{Calendar Queue} scheduler.
+
+\subsection{Event Hierarchy and Tie-Breaking}
+Events are strictly ordered by a 3-tuple:
+\begin{equation}
+e_1 < e_2 \iff (t_1, p_1, s_1) < (t_2, p_2, s_2)
+\end{equation}
+where:
+\begin{enumerate}[noitemsep]
+    \item $t \in \mathbb{N}$: Monotonic timestamp in integer 100-nanosecond ticks (\texttt{SimTime}).
+    \item $p \in [0, 255]$: Priority tier ($p=0$: \texttt{MacTxStart}, $p=1$: \texttt{MobilityStep}, $p=2$: \texttt{PhyRxDelivery}).
+    \item $s \in \mathbb{N}$: Monotonic sequence counter guaranteeing deterministic FIFO execution.
+\end{enumerate}
+
+\subsection{Event Execution Sequence}
+\begin{enumerate}
+    \item \textbf{\texttt{MobilityStep} ($p=1$):} Advanced at fixed discrete steps $\Delta t_{\mathrm{mob}} \in [50, 100]\,\mathrm{ms}$. Updates vehicle coordinates, verifies CAM kinematic triggers ($|\Delta \theta| \ge 4^\circ$, $\Delta d \ge 4\,\mathrm{m}$), and enqueues frames to the MAC layer.
+    \item \textbf{MAC Contention Delay:} Computes backoff delay $\Delta t_{\mathrm{backoff}} = \mathrm{AIFS} + k \cdot T_{\mathrm{slot}}$ and schedules \texttt{MacTxStart} at $t_{\mathrm{tx}} = t_{\mathrm{now}} + \Delta t_{\mathrm{backoff}}$ ($p=0$).
+    \item \textbf{\texttt{MacTxStart} ($p=0$):} Registers the transmission in \texttt{RadioMedium} as active from $t_{\mathrm{tx}}$ to $t_{\mathrm{tx}} + T_{\mathrm{trans}}$. Executes parallel spatial k-d tree radius queries ($800\,\mathrm{m}$) and chunked SINR evaluations. For each recipient, schedules \texttt{PhyRxDelivery} at $t_{\mathrm{del}} = t_{\mathrm{tx}} + \text{delivery\_delay}$ ($p=2$).
+    \item \textbf{\texttt{PhyRxDelivery} ($p=2$):} Delivers decoded bytes to the receiver's GeoNetworking stack, updates the Local Dynamic Map (LDM), and injects deceleration commands if emergency hazard DENMs are decoded.
+\end{enumerate}
+
+\section{Transmission Delay vs. Propagation Delay}
+
+\subsection{Transmission Delay ($T_{\mathrm{trans}}$)}
+\textbf{Transmission delay is strictly and explicitly modeled at microsecond precision.}
+In IEEE 802.11p (10 MHz channel, 6 Mbps QPSK 1/2):
+\begin{equation}
+T_{\mathrm{trans}} = T_{\mathrm{preamble}} (32\,\mu\mathrm{s}) + T_{\mathrm{signal}} (8\,\mu\mathrm{s}) + \left\lceil \frac{16 + 8L + 6}{N_{\mathrm{DBPS}}} \right\rceil \times T_{\mathrm{sym}} (8\,\mu\mathrm{s})
+\end{equation}
+For a typical $300$-byte CAM frame, $N_{\mathrm{DBPS}} = 48$, yielding $51$ OFDM data symbols:
+\begin{equation}
+T_{\mathrm{trans}} = 32\,\mu\mathrm{s} + 8\,\mu\mathrm{s} + (51 \times 8\,\mu\mathrm{s}) = 448\,\mu\mathrm{s}
+\end{equation}
+During this entire $448\,\mu\mathrm{s}$ window, the medium is held busy, directly contributing to adjacent interference chunks.
+
+\subsection{Propagation Delay ($\tau_{\mathrm{prop}}$)}
+In free space, electromagnetic propagation latency is governed by the speed of light:
+\begin{equation}
+\tau_{\mathrm{prop}} = \frac{d}{c}
+\end{equation}
+Over vehicular communication ranges:
+\begin{itemize}[noitemsep]
+    \item $d = 100\,\mathrm{m} \implies \tau_{\mathrm{prop}} \approx 0.33\,\mu\mathrm{s}$ ($333\,\text{ns}$).
+    \item $d = 300\,\mathrm{m} \implies \tau_{\mathrm{prop}} \approx 1.00\,\mu\mathrm{s}$.
+    \item $d = 800\,\mathrm{m} \implies \tau_{\mathrm{prop}} \approx 2.67\,\mu\mathrm{s}$.
+\end{itemize}
+
+In \texttt{rustv2xsimulator}, delivery timing is scheduled as:
+\begin{equation}
+t_{\mathrm{delivery}} = t_{\mathrm{tx}} + T_{\mathrm{trans}} + 10\,\mu\mathrm{s}
+\end{equation}
+The simulator adds a calibrated **$10\,\mu\mathrm{s}$ turnaround guard offset** to the packet's air transmission duration. Because transmission duration ($448\,\mu\mathrm{s}$) is **two orders of magnitude larger** than physical propagation delay ($\le 2.67\,\mu\mathrm{s}$), approximating the propagation and receiver hardware turnaround time with a $10\,\mu\mathrm{s}$ offset avoids millions of floating-point divisions while preserving causal event ordering.
+
+\section{Conclusion}
+Congestion in \texttt{rustv2xsimulator} is modeled across all layers of the stack: facilities rate throttling, EDCA backoff contention, and physical-layer interference superposition. Simultaneous transmissions are resolved using piecewise-constant chunked SINR tracking and receiver capture modeling matching ns-3 v3.42. Transmission air duration is computed to microsecond precision, while propagation delay is embedded within a $10\,\mu\mathrm{s}$ hardware turnaround offset.
+
+\begin{thebibliography}{9}
+\bibitem{ns3helper}
+ns-3 Consortium, ``ns-3 Model Library: Wireless Models and InterferenceHelper,'' Release 3.42, 2024.
+\bibitem{etsi102687}
+ETSI, ``Intelligent Transport Systems (ITS); Decentralized Congestion Control Mechanisms for Intelligent Transport Systems operating in the 5 GHz range,'' ETSI TS 102 687 v1.2.1, 2018.
+\bibitem{ieee80211}
+IEEE, ``IEEE Standard for Information technology--Telecommunications and information exchange between systems Local and metropolitan area networks--Specific requirements - Part 11: Wireless LAN MAC and PHY Specifications,'' IEEE Std 802.11-2020.
+\end{thebibliography}
+
+\end{document}

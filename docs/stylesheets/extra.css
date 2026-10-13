@@ -1,0 +1,36 @@
+/* Custom styling for rustv2xsimulator documentation */
+
+/* Mermaid architecture diagrams enhancement */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.mermaid svg {
+  max-width: 100% !important;
+  height: auto !important;
+  font-family: var(--md-text-font, -apple-system, BlinkMacSystemFont, Roboto, sans-serif) !important;
+}
+
+/* Crisp, readable labels */
+.mermaid .nodeLabel {
+  font-size: 13.5px !important;
+  line-height: 1.35 !important;
+}
+
+.mermaid .cluster-label span,
+.mermaid .cluster-label text {
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* High contrast edges and arrowheads */
+.mermaid .edgePath path.path {
+  stroke-width: 2px !important;
+}

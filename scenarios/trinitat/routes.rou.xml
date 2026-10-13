@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Generated from trips in new.trips.xml and more.trips.xml for Nus de la Trinitat, Barcelona -->
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <!-- Vehicle types -->
+    <vType id="veh_passenger" vClass="passenger" accel="2.6" decel="4.5" sigma="0.5" length="4.5" minGap="2.5" maxSpeed="55.55"/>
+
+    <!-- Routes derived from original trips (0 - 9) -->
+    <route id="0" edges="176378398 29418140 377176402 29418141 29418141-AddedOffRampEdge 28973642 98324070-AddedOnRampEdge 98324070 28951376"/>
+    <route id="1" edges="176378398 29418140 377176402 29418141 29418141-AddedOffRampEdge 98551640 98551630"/>
+    <route id="2" edges="98669344 28951778 28822304 1394492356"/>
+    <route id="3" edges="98669344 29380170 98669345 1047496042 377176399 28822308"/>
+    <route id="4" edges="210550075 1057425613 21292177 1057425612 364431260#0 364431260#0-AddedOffRampEdge 364431260#1 364431260#2-AddedOnRampEdge 364431260#2 364431260#2-AddedOffRampEdge 543198864 521051957 1395170967 560625704 1395170968 286881075"/>
+    <route id="5" edges="210550075 472411906 364431259#1 567599809 98324066 290299053 98669345 1047496042 377176399 28822308"/>
+    <route id="6" edges="364431259#1 567599809 98324066 290299053 98669345 1047496042 377176399 28822308"/>
+    <route id="7" edges="364431259#0 364431259#1 567599809 98324066 478486768 182049940 1393749284 28822304 1394492356"/>
+    <route id="8" edges="29418218 29418218-AddedOffRampEdge 98324068 310357103 1377450364-AddedOnRampEdge 1377450364 310248140 28951376"/>
+    <route id="9" edges="29418218 29418218-AddedOffRampEdge 98324071 98551630"/>
+
+    <!-- Additional routes from more.rou.xml (10 - 13) -->
+    <route id="10" edges="290130357 521051955 560625696 28822302 521051954 238179135 23351308 98324070-AddedOnRampEdge 98324070 28951376"/>
+    <route id="11" edges="198687819 1047582920 1377450364-AddedOnRampEdge 1377450364 310248140 28951376"/>
+    <route id="12" edges="198687819 198687818 920420096 364431271"/>
+    <route id="13" edges="364431259#0 364431259#1 364431263 1484291428 -198687818 -1377450363"/>
+</routes>
