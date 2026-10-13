@@ -11,6 +11,7 @@ repository = "https://github.com/Fundacio-i2CAT/RustV2XSimulator"
 keywords = ["v2x", "c-its", "simulation", "etsi", "vehicular-networks"]
 categories = ["simulation", "science", "network-programming"]
 exclude = [
+    "docs/",
     "ignore/",
     "results/",
     "site/"
