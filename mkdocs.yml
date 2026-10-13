@@ -1,4 +1,5 @@
 site_name: RustV2XSimulator
+site_url: https://fundacio-i2cat.github.io/RustV2XSimulator/
 site_description: High-Performance, Modular Discrete-Event Simulation Framework for Vehicular Communications (V2X) and ETSI C-ITS in Rust
 site_author: Jordi Marias
 repo_name: Fundacio-i2CAT/RustV2XSimulator

@@ -4,6 +4,7 @@
 
 ![Rust](https://img.shields.io/badge/rust-1.85%2B-orange)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-blue)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://fundacio-i2cat.github.io/RustV2XSimulator/)
 
 # Short description
 
@@ -21,7 +22,7 @@ Operating with a deterministic 100-nanosecond calendar queue scheduler (`SimTime
 
 # Documentation
 
-Extensive documentation is available in the [`docs/`](docs/) directory and online.
+Extensive documentation is available in the [`docs/`](docs/) directory and online at [fundacio-i2cat.github.io/RustV2XSimulator](https://fundacio-i2cat.github.io/RustV2XSimulator/).
 
 Local documentation can be served using MkDocs:
 
