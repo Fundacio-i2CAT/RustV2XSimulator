@@ -37,7 +37,7 @@ use crate::dcc::reactive_fsm::ReactiveDccFsm;
 use crate::geometry::kd_tree::{NodeEntry, SpatialIndex};
 use crate::geometry::polygon::BuildingMap;
 use crate::mac::channel_monitor::ChannelMonitor;
-use crate::mac::edca::EdcaChannelAccess;
+use crate::mac::edca::{AccessCategory, EdcaChannelAccess};
 use crate::mobility::sumo_interface::{SumoMobilityConfig, SumoMobilitySource};
 use crate::mobility::trajectory_source::{
     HighwayMobilityGenerator, PlatoonMobilityGenerator, SyntheticMobilityType, TrajectorySource,
@@ -607,7 +607,7 @@ impl SimulationEngine {
         {
             let _guard = self.profiler.start_timer(ProfileCategory::Stack);
 
-            let mut outbound_ready = Vec::new();
+            // Phase 1: Application triggers & generation across all active agents
             for agent in self.agents.values_mut() {
                 let ego_coord = agent
                     .kinematics
@@ -649,13 +649,31 @@ impl SimulationEngine {
                         1,
                     );
                 }
+            }
 
-                // Drain link layer cross-bridges (BTP <-> GN)
+            // Phase 2: Synchronous multi-stage TX bridge draining loop.
+            // Pumps cross-channel bridges 10 times across all active agents with micro-sleeps.
+            // Gives background BTP and GeoNetworking worker threads ~1.5 ms of wall-clock time
+            // to serialize ASN.1 and route packets into gn_to_ll_rx in the CURRENT simulation tick.
+            for _ in 0..10 {
+                for agent in self.agents.values_mut() {
+                    agent.link_layer.drain_bridges();
+                }
+                std::thread::sleep(std::time::Duration::from_micros(150));
+            }
+            for agent in self.agents.values_mut() {
                 agent.link_layer.drain_bridges();
+            }
 
-                // Drain outbound GeoNetworking frames produced by GN router
+            // Phase 3: Drain outbound link-layer frames and enqueue into MAC in the same tick
+            let mut outbound_ready = Vec::new();
+            for agent in self.agents.values_mut() {
                 let frames = agent.link_layer.drain_outbound_frames(now);
                 for (ac, frame) in frames {
+                    // For CAM BestEffort traffic, discard any stale unsent frames per ETSI TS 103 900
+                    if ac == AccessCategory::BestEffort {
+                        agent.mac.queues[ac as usize].buffer.clear();
+                    }
                     let payload_copy = frame.payload.clone();
                     if let Some(tx_time) = agent.tech.enqueue_outbound(frame, ac as u8, now, &mut self.rng) {
                         outbound_ready.push((agent.id, ac as u8, payload_copy, tx_time));
@@ -874,6 +892,10 @@ impl SimulationEngine {
         // Inject decoded GeoNetworking frame into receiver's link layer
         if let Some(agent) = self.agents.get_mut(&receiver_id) {
             agent.link_layer.inject_rx(&payload_bytes);
+            for _ in 0..10 {
+                agent.link_layer.drain_bridges();
+                std::thread::sleep(std::time::Duration::from_micros(150));
+            }
             agent.link_layer.drain_bridges();
 
             // Process received CAMs (LDM is automatically updated by CAMReceptionManagement)

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-10-23
+
+### Fixed
+- **Asynchronous TX Stack Buffering Lag**:
+  - Eliminated the unphysical 50 ms transmission queueing lag in `SimulationEngine::handle_mobility_step`.
+  - Refactored transmission handling into three distinct phases: (1) Application trigger and CAM generation across active agents, (2) synchronous multi-stage cross-channel bridge draining loop with micro-sleeps to allow background BTP/GeoNetworking threads to serialize ASN.1 and route frames, and (3) outbound link-layer frame draining and MAC enqueueing in the exact same simulation tick.
+  - Added synchronous multi-stage bridge draining to `SimulationEngine::handle_phy_rx` to ensure received frames are completely parsed into facilities before CAM inspection.
+  - Automatically clear stale unsent BestEffort frames per ETSI TS 103 900 when new CAMs are queued.
+
 ## [0.3.0] - 2026-10-23
 
 ### Removed
