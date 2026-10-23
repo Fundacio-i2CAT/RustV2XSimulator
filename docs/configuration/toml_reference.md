@@ -18,7 +18,7 @@ poly_file = "scenarios/diagonal/osm.poly.xml"
 duration = 60.0
 time_step = 0.1
 seed = 42
-workload = "cam" # "cam", "eebl", "cam_static_10hz"
+workload = "cam" # "cam", "cps"
 
 [mobility]
 mode = "sumo" # "sumo", "highway", "platoon", "urban"
@@ -54,12 +54,6 @@ beta = 0.0012
 min_rate_hz = 2.0
 max_rate_hz = 10.0
 
-[actuation]
-mode = "krauss_substep" # "krauss_substep" or "quantized"
-max_decel = 6.0
-reaction_time_s = 0.1
-min_gap_m = 2.5
-
 [metrics]
 output_dir = "results/diagonal/"
 export_csv = true
@@ -84,7 +78,7 @@ enable_pcap = true
 | `duration` | Float | `30.0` | Total simulation duration in seconds |
 | `time_step` | Float | `0.1` | Mobility stepping resolution in seconds |
 | `seed` | Integer | `42` | PRNG seed for deterministic reproducibility |
-| `workload` | String | `"cam"` | Traffic workload: `"cam"`, `"eebl"`, or `"cam_static_10hz"` |
+| `workload` | String | `"cam"` | Traffic workload: `"cam"` or `"cps"` |
 
 ### `[phy]`
 | Key | Type | Default | Description |

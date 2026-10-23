@@ -17,7 +17,6 @@ Operating with a deterministic 100-nanosecond calendar queue scheduler (`SimTime
 - **3GPP C-V2X PC5 Mode 4**: 2D time-frequency subchannel resource grid with Sensing-Based Semi-Persistent Scheduling (SB-SPS) and dual PSCCH/PSSCH BLER decoding.
 - **3GPP 5G NR-V2X Sidelink Mode 2**: Flexible numerologies ($\mu \in \{0, 1, 2\}$, 15/30/60 kHz SCS), Two-Stage SCI (Format 1-A & Format 2-A), Release 16 $T_3$ re-evaluation lookahead, priority pre-emption, and Stop-and-Wait PSFCH closed-loop HARQ feedback.
 - **Parametric Empirical Model**: Fast 10th-degree polynomial distance loss, logistic spatio-temporal congestion calculation, and Gaussian delay for large-scale macroscopic studies.
-- **Microscopic Krauß-Safe Actuation**: Closed-loop ballistic intra-step deceleration injection upon receiving Emergency Electronic Brake Lights (EEBL) DENMs, preventing discrete-step discretization delay and ensuring zero rear-end collisions.
 - **Wireshark libpcap Trace Export**: Direct export to `.pcap` capture files containing raw Ethernet II frames with EtherType `0x8947` (ETSI GeoNetworking), dissectible in Wireshark.
 
 # Documentation

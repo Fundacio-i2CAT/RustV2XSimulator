@@ -13,7 +13,7 @@
 ```mermaid
 flowchart TD
     subgraph Mobility ["1. Vehicular Mobility & Environment"]
-        Scenarios["<b>SUMO TraCI / Synthetic Mobility</b><br/>Microscopic vehicle kinematics, Krauß collision-avoidance actuation & building footprints"]
+        Scenarios["<b>SUMO TraCI / Synthetic Mobility</b><br/>Microscopic vehicle kinematics & building footprints"]
     end
 
     subgraph Stack ["2. ETSI C-ITS Protocol Stack (RustFlexstack)"]
@@ -63,7 +63,7 @@ flowchart TD
   - **3GPP 5G NR-V2X Sidelink Mode 2**: Flexible numerologies ($\mu \in \{0, 1, 2\}$, 15/30/60 kHz SCS), Two-Stage SCI (Format 1-A on PSCCH, Format 2-A on PSSCH), Mode 2 autonomous sensing, Release 16 Re-evaluation lookahead ($T_3$), Pre-emption, PSFCH closed-loop HARQ feedback, and 5G NR LDPC/Polar BLER error curves.
   - **Parametric Empirical Model**: Fast 10th-degree polynomial distance loss curve, spatio-temporal logistic congestion tracking, binary building occlusion, and configurable Gaussian delay.
 - **Native ETSI C-ITS Protocol Stack**: Full protocol compliance with ETSI EN 302 636-4-1 (GeoNetworking), EN 302 636-5-1 (BTP), TS 103 900 (CAM), and TS 103 097 (Security).
-- **Microscopic Mobility**: Bi-directional SUMO TraCI interface with sub-stepping Krauß collision-avoidance actuation upon receiving emergency electronic brake light (EEBL) DENMs.
+- **Microscopic Mobility**: Bi-directional SUMO TraCI interface and built-in synthetic mobility generators (highways, platoons, urban Manhattan grids).
 - **Academic Validation**: Validated against **ns-3 v3.42**, **OMNeT++ Veins 5.2**, **CTTC 5G-LENA**, and the **UWICORE NR-V2X Simulator**, providing rigorous credibility for peer-reviewed academic publications.
 
 ---

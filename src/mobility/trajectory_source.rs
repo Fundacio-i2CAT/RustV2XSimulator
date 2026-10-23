@@ -26,7 +26,6 @@ pub trait TrajectorySource: Send + Sync {
     fn step(&mut self, dt_s: f64) -> Vec<VehicleKinematics>;
     fn get_vehicles(&self) -> &[VehicleKinematics];
     fn get_vehicle_mut(&mut self, id: ActorId) -> Option<&mut VehicleKinematics>;
-    fn set_hazard_time_s(&mut self, _t: f64) {}
 }
 
 /// Deterministic multi-lane highway mobility generator.
@@ -86,22 +85,15 @@ impl TrajectorySource for HighwayMobilityGenerator {
     }
 }
 
-/// Linear platoon mobility generator for Krauß collision-safety testing.
+/// Linear platoon mobility generator.
 #[derive(Debug, Clone)]
 pub struct PlatoonMobilityGenerator {
     pub vehicles: Vec<VehicleKinematics>,
-    pub leader_brake_time_s: f64,
-    pub leader_decel: f64,
-    pub elapsed_time_s: f64,
+    pub initial_speed: f64,
 }
 
 impl PlatoonMobilityGenerator {
-    pub fn new(
-        num_vehicles: usize,
-        initial_speed: f64,
-        initial_gap: f64,
-        leader_brake_time_s: f64,
-    ) -> Self {
+    pub fn new(num_vehicles: usize, initial_speed: f64, initial_gap: f64) -> Self {
         let mut vehicles = Vec::with_capacity(num_vehicles);
         let vehicle_len = 5.0;
 
@@ -110,12 +102,8 @@ impl PlatoonMobilityGenerator {
             let x = -(i as f64) * (vehicle_len + initial_gap);
             let mut vk = VehicleKinematics::new(id, Point2D::new(x, 0.0), initial_speed, 0.0);
             vk.length_m = vehicle_len;
-            vk.max_decel = 8.0;
-            vk.reaction_time_s = 0.1;
-            vk.min_gap_m = 2.5;
 
             if i > 0 {
-                // Predecessor is vehicle i
                 vk.leader_id = Some(i as ActorId);
                 vk.leader_distance = Some(initial_gap);
                 vk.leader_speed = Some(initial_speed);
@@ -125,58 +113,16 @@ impl PlatoonMobilityGenerator {
 
         Self {
             vehicles,
-            leader_brake_time_s,
-            leader_decel: 8.0,
-            elapsed_time_s: 0.0,
+            initial_speed,
         }
     }
 }
 
 impl TrajectorySource for PlatoonMobilityGenerator {
-    fn set_hazard_time_s(&mut self, t: f64) {
-        self.leader_brake_time_s = t;
-    }
-
     fn step(&mut self, dt_s: f64) -> Vec<VehicleKinematics> {
-        self.elapsed_time_s += dt_s;
-        let is_leader_braking = self.elapsed_time_s >= self.leader_brake_time_s;
-
-        // Update leader (index 0)
-        let leader = &mut self.vehicles[0];
-        if is_leader_braking {
-            leader.is_braking_hazard = true;
-            leader.acceleration = -self.leader_decel;
-            leader.speed = (leader.speed - self.leader_decel * dt_s).max(0.0);
+        for vk in &mut self.vehicles {
+            vk.position.x += vk.speed * dt_s;
         }
-        leader.position.x += leader.speed * dt_s;
-
-        // Update followers
-        let n = self.vehicles.len();
-        for i in 1..n {
-            let lead_x = self.vehicles[i - 1].position.x;
-            let lead_speed = self.vehicles[i - 1].speed;
-            let lead_id = self.vehicles[i - 1].id;
-
-            let ego = &mut self.vehicles[i];
-            let gap_before = (lead_x - ego.position.x - ego.length_m).max(0.0);
-            ego.leader_id = Some(lead_id);
-            ego.leader_speed = Some(lead_speed);
-
-            if ego.is_braking_hazard {
-                ego.speed = (ego.speed - ego.max_decel * dt_s).max(0.0);
-                ego.acceleration = -ego.max_decel;
-            }
-
-            // Krauß collision avoidance: clamp advance so gap never falls below min_gap_m
-            let max_advance = (gap_before - ego.min_gap_m).max(0.0);
-            let desired_advance = ego.speed * dt_s;
-            let advance = desired_advance.min(max_advance);
-            ego.position.x += advance;
-
-            let gap_after = (lead_x - ego.position.x - ego.length_m).max(0.0);
-            ego.leader_distance = Some(gap_after);
-        }
-
         self.vehicles.clone()
     }
 

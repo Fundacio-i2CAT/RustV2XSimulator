@@ -25,7 +25,6 @@ pub struct SimulatorLinkLayer {
     btp_handle: BTPRouterHandle,
     /// BTP -> GN: BTP router sends GNDataRequest here; drained to router_handle.
     btp_to_gn_rx: Receiver<GNDataRequest>,
-    pub is_threaded_mode: bool,
     next_frame_id: std::cell::Cell<u64>,
 }
 
@@ -37,7 +36,6 @@ impl SimulatorLinkLayer {
         gn_to_btp_rx: Receiver<GNDataIndication>,
         btp_handle: BTPRouterHandle,
         btp_to_gn_rx: Receiver<GNDataRequest>,
-        is_threaded_mode: bool,
     ) -> Self {
         Self {
             station_id,
@@ -46,7 +44,6 @@ impl SimulatorLinkLayer {
             gn_to_btp_rx,
             btp_handle,
             btp_to_gn_rx,
-            is_threaded_mode,
             next_frame_id: std::cell::Cell::new(1),
         }
     }

@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-23
+
+### Removed
+- **Monaco & CARISSMA Simulation Environments**:
+  - Removed `config/env3_monaco.toml` and `config/env4_carissma.toml`.
+
+## [0.2.0] - 2026-10-23
+
+### Removed
+- **Krauß-Safe Actuation & EEBL Pipeline**:
+  - Removed `src/mobility/krauss_actuation.rs` and `tests/krauss_substep_safety_test.rs`.
+  - Removed `ActuationMode`, `ActuationResult`, and `KraussSafeActuator` from public API.
+  - Removed `KraussBrakeActuation` from `EventPayload`.
+  - Removed `create_eebl_request` and EEBL emergency braking hazard constants from `src/cits/denm.rs`.
+  - Removed car-following and hazard fields (`is_braking_hazard`, `min_gap_m`, `max_decel`, `reaction_time_s`) from `VehicleKinematics`.
+  - Removed `set_hazard_time_s` from `TrajectorySource` trait and cleaned `PlatoonMobilityGenerator`.
+  - Removed `actuator`, `hazard_time_s`, `collision_count`, and EEBL packet interception logic from `SimulationEngine`.
+  - Removed `--actuation-mode` CLI flag and `[actuation]` configuration sections.
+- **Paper Ablation Flags**:
+  - Removed `is_aloha_mac` from `EngineConfig`, `EdcaChannelAccess`, `Dsrc80211pModel`, and `Wifi80211bdModel`.
+  - Removed `is_all_pairs_geometry` from `EngineConfig` (engine always utilizes $O(\log N)$ 2D k-d tree spatial indexing).
+  - Removed `is_threaded_stack` from `EngineConfig` and `SimulatorLinkLayer`.
+  - Removed rigid fixed-rate CAM override `cam_static_10hz`; standard dynamic kinematic triggers are always enabled.
+- **Paper Folder**:
+  - Removed `paper/` directory and draft assets from repository.
+
+### Changed
+- Standardized `SpatialIndex` default instantiation in `SimulationEngine`.
+- Simplified `PlatoonMobilityGenerator` to represent uniform vehicular platooning without ad-hoc emergency braking triggers.
+- Updated `.gitignore` to ensure all context directories (`aoibenchmark/`, `RustFlexstack/`, `ignore/`) are properly ignored.
+
 ## [0.1.0] - 2026-10-13
 
 ### Added

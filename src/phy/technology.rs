@@ -69,13 +69,13 @@ pub struct Dsrc80211pModel {
 }
 
 impl Dsrc80211pModel {
-    pub fn new(is_aloha: bool, tx_power_dbm: f64, sim_seed: u64) -> Self {
-        Self::with_mcs(is_aloha, tx_power_dbm, sim_seed, Mcs80211p::default())
+    pub fn new(tx_power_dbm: f64, sim_seed: u64) -> Self {
+        Self::with_mcs(tx_power_dbm, sim_seed, Mcs80211p::default())
     }
 
-    pub fn with_mcs(is_aloha: bool, tx_power_dbm: f64, sim_seed: u64, mcs: Mcs80211p) -> Self {
+    pub fn with_mcs(tx_power_dbm: f64, sim_seed: u64, mcs: Mcs80211p) -> Self {
         Self {
-            mac: EdcaChannelAccess::new(is_aloha, -85.0),
+            mac: EdcaChannelAccess::new(-85.0),
             channel_monitor: ChannelMonitor::default(),
             medium: RadioMedium::new(PhyModelType::DualSlope, tx_power_dbm),
             sim_seed,
@@ -105,11 +105,7 @@ impl WirelessTechnology for Dsrc80211pModel {
         };
         self.mac.enqueue_packet(ac, frame, rng);
         if let Some((winning_ac, _)) = self.mac.poll_ready_transmission(rng) {
-            let backoff = if self.mac.is_aloha_mode {
-                SimTime::ZERO
-            } else {
-                self.mac.compute_backoff_delay(winning_ac, rng)
-            };
+            let backoff = self.mac.compute_backoff_delay(winning_ac, rng);
             Some(now + backoff)
         } else {
             None

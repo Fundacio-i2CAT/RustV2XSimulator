@@ -2,7 +2,7 @@
 //!
 //! Orchestrates microscopic mobility, ETSI C-ITS protocols via `rustflexstack`,
 //! EDCA MAC contention, Rayon-parallel physical medium evaluation,
-//! Krauß-safe actuation, and telemetry.
+//! and telemetry.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -21,8 +21,7 @@ use rustflexstack::geonet::basic_header::{BasicHeader, BasicNH};
 use rustflexstack::security::certificate::decode_ieee1609_dot2_data;
 use rustflexstack::security::security_asn::ieee1609_dot2::{Ieee1609Dot2Content, SignerIdentifier};
 use crate::cits::denm::{
-    create_eebl_request, DecentralizedEnvironmentalNotificationService, Denm,
-    VehicleData as DenmVehData,
+    DecentralizedEnvironmentalNotificationService, Denm, VehicleData as DenmVehData,
 };
 use crate::cits::geonet::{
     create_long_position_vector, GNAddress, GNRouter, Mib, RouterHandle, M, MID, ST,
@@ -39,7 +38,6 @@ use crate::geometry::kd_tree::{NodeEntry, SpatialIndex};
 use crate::geometry::polygon::BuildingMap;
 use crate::mac::channel_monitor::ChannelMonitor;
 use crate::mac::edca::EdcaChannelAccess;
-use crate::mobility::krauss_actuation::{ActuationMode, KraussSafeActuator};
 use crate::mobility::sumo_interface::{SumoMobilityConfig, SumoMobilitySource};
 use crate::mobility::trajectory_source::{
     HighwayMobilityGenerator, PlatoonMobilityGenerator, SyntheticMobilityType, TrajectorySource,
@@ -76,19 +74,14 @@ pub struct EngineConfig {
     pub mobility_step_s: f64,
     pub num_nodes: usize,
     pub seed: u64,
-    pub workload: String, // "cam", "cps", "eebl"
+    pub workload: String, // "cam", "cps"
     pub mobility_type: SyntheticMobilityType,
     pub technology: WirelessTechnologyType,
     pub phy_model: PhyModelType,
     pub parametric_phy: LegacyPolynomialPathLoss,
-    pub is_aloha_mac: bool,
     pub dcc_config: DccConfig,
-    pub actuation_mode: ActuationMode,
-    pub is_all_pairs_geometry: bool,
-    pub is_threaded_stack: bool,
     pub output_dir: String,
     pub enable_pcap: bool,
-    pub hazard_time_s: f64,
     pub security_enabled: bool,
     pub verify_packets: bool,
     #[serde(default)]
@@ -114,14 +107,9 @@ impl Default for EngineConfig {
             technology: WirelessTechnologyType::Dsrc80211p,
             phy_model: PhyModelType::DualSlope,
             parametric_phy: LegacyPolynomialPathLoss::default(),
-            is_aloha_mac: false,
             dcc_config: DccConfig::default(),
-            actuation_mode: ActuationMode::KraussSubstep,
-            is_all_pairs_geometry: false,
-            is_threaded_stack: false,
             output_dir: "results/output/".to_string(),
             enable_pcap: false,
-            hazard_time_s: 5.0,
             security_enabled: false,
             verify_packets: false,
             mcs: None,
@@ -148,7 +136,6 @@ pub struct VehicleAgent {
     pub tech: Box<dyn WirelessTechnology>,
     pub dcc_reactive: Option<ReactiveDccFsm>,
     pub dcc_limeric: Option<LimericDcc>,
-    pub actuator: KraussSafeActuator,
     pub last_cbr: f64,
 }
 
@@ -162,11 +149,9 @@ pub struct SimulationEngine {
     pub radio_medium: RadioMedium,
     pub agents: HashMap<ActorId, VehicleAgent>,
     pub pcap_writer: Option<PcapWriter>,
-    pub collision_count: u64,
     pub geodetic: GeodeticTransform,
     pub rng: StdRng,
     pub next_packet_id: u64,
-    pub hazard_time_s: f64,
     pub pki: Option<SimPki>,
 }
 
@@ -235,7 +220,6 @@ impl SimulationEngine {
                 config.num_nodes,
                 25.0, // 90 km/h
                 20.0, // 20 m initial gap
-                config.hazard_time_s,
             )),
             SyntheticMobilityType::Replay => Box::new(HighwayMobilityGenerator::new(
                 config.num_nodes,
@@ -245,7 +229,7 @@ impl SimulationEngine {
             )),
         };
 
-        let spatial_index = SpatialIndex::with_all_pairs(config.is_all_pairs_geometry);
+        let spatial_index = SpatialIndex::new();
         let mut radio_medium = RadioMedium::new(config.phy_model, 23.0);
         radio_medium.legacy_poly = config.parametric_phy.clone();
 
@@ -258,7 +242,6 @@ impl SimulationEngine {
         };
 
         let geodetic = GeodeticTransform::default();
-        let hazard_time_s = config.hazard_time_s;
 
         let pki = if config.security_enabled {
             Some(SimPki::new())
@@ -276,11 +259,9 @@ impl SimulationEngine {
             radio_medium,
             agents: HashMap::new(),
             pcap_writer,
-            collision_count: 0,
             geodetic,
             rng,
             next_packet_id: 1,
-            hazard_time_s,
             pki,
         };
 
@@ -348,7 +329,6 @@ impl SimulationEngine {
             gn_to_btp_rx,
             btp_handle.clone(),
             btp_to_gn_rx,
-            self.config.is_threaded_stack,
         );
 
         let coord = vk.to_wgs84(self.geodetic.orig_lat, self.geodetic.orig_lon);
@@ -359,9 +339,7 @@ impl SimulationEngine {
         let ldm = LdmFacility::new(lat_etsi, lon_etsi, 2000.0);
 
         let location_service = LocationService::new();
-
-        let is_dynamic_cam = self.config.workload != "cam_static_10hz";
-        let cam_trigger = CamTriggerEvaluator::new(id, is_dynamic_cam);
+        let cam_trigger = CamTriggerEvaluator::new(id, true);
 
         let vehicle_data = VehicleData {
             station_id: id,
@@ -387,7 +365,7 @@ impl SimulationEngine {
             den_veh_data,
         );
 
-        let mac_access = EdcaChannelAccess::new(self.config.is_aloha_mac, -85.0);
+        let mac_access = EdcaChannelAccess::new(-85.0);
         let channel_monitor = ChannelMonitor::default();
 
         let dcc_reactive = match self.config.dcc_config.mode {
@@ -406,23 +384,15 @@ impl SimulationEngine {
             _ => None,
         };
 
-        let actuator = KraussSafeActuator::new(
-            self.config.actuation_mode,
-            vk.max_decel,
-            vk.reaction_time_s,
-            vk.min_gap_m,
-        );
-
         let tech: Box<dyn WirelessTechnology> = match self.config.technology {
             WirelessTechnologyType::Dsrc80211p => {
                 let mcs_11p = self.config.mcs.map(Mcs80211p::from_index).unwrap_or_default();
-                Box::new(Dsrc80211pModel::with_mcs(self.config.is_aloha_mac, 23.0, self.config.seed + (id as u64), mcs_11p))
+                Box::new(Dsrc80211pModel::with_mcs(23.0, self.config.seed + (id as u64), mcs_11p))
             }
             WirelessTechnologyType::Wifi80211bd => {
                 let mcs_11bd = self.config.mcs.map(Mcs80211bd::from_index).unwrap_or(Mcs80211bd::Mcs2Qpsk3_4);
                 Box::new(Wifi80211bdModel::new(
                     Wifi80211bdConfig {
-                        is_aloha: self.config.is_aloha_mac,
                         tx_power_dbm: 23.0,
                         mcs: mcs_11bd,
                         ..Default::default()
@@ -460,7 +430,7 @@ impl SimulationEngine {
             }
             _ => {
                 let mcs_11p = self.config.mcs.map(Mcs80211p::from_index).unwrap_or_default();
-                Box::new(Dsrc80211pModel::with_mcs(self.config.is_aloha_mac, 23.0, self.config.seed + (id as u64), mcs_11p))
+                Box::new(Dsrc80211pModel::with_mcs(23.0, self.config.seed + (id as u64), mcs_11p))
             }
         };
 
@@ -483,7 +453,6 @@ impl SimulationEngine {
             tech,
             dcc_reactive,
             dcc_limeric,
-            actuator,
             last_cbr: 0.0,
         };
 
@@ -556,14 +525,6 @@ impl SimulationEngine {
                 EventPayload::CbrUpdate { node_id } => {
                     self.handle_cbr_update(node_id)?;
                 }
-                EventPayload::KraussBrakeActuation {
-                    node_id,
-                    leader_id,
-                    eebl_delivery_time,
-                    decel_req,
-                } => {
-                    self.handle_brake_actuation(node_id, leader_id, eebl_delivery_time, decel_req)?;
-                }
                 _ => {}
             }
 
@@ -610,13 +571,10 @@ impl SimulationEngine {
         let now = self.scheduler.current_time();
         let dt_s = self.config.mobility_step_s;
 
-        // Sync hazard time and agent kinematics to trajectory before stepping
-        self.trajectory.set_hazard_time_s(self.hazard_time_s);
         for (id, agent) in &self.agents {
             if let Some(veh) = self.trajectory.get_vehicle_mut(*id) {
                 veh.speed = agent.kinematics.speed;
                 veh.acceleration = agent.kinematics.acceleration;
-                veh.is_braking_hazard = agent.kinematics.is_braking_hazard;
             }
         }
 
@@ -677,31 +635,19 @@ impl SimulationEngine {
                 };
                 agent.location_service.publish(fix);
 
-                // Check EEBL emergency braking condition
-                if agent.kinematics.is_braking_hazard && self.config.workload == "eebl" {
-                    let den_req = create_eebl_request(
-                        &ego_coord,
-                        agent.kinematics.speed,
-                        agent.kinematics.heading_deg,
+                // Evaluate dynamic CAM generation triggers
+                let should_cam = agent.cam_trigger.should_generate(
+                    now,
+                    agent.kinematics.position,
+                    agent.kinematics.speed,
+                    agent.kinematics.heading_deg,
+                );
+                if should_cam {
+                    let _ = agent.cam_transmission.generate_and_send_cam(
+                        &fix,
+                        now.to_millis(),
+                        1,
                     );
-                    agent.den_service.send_single_denm(&den_req);
-                }
-
-                // Check CAM kinematic triggers
-                if self.config.workload != "eebl" || !agent.kinematics.is_braking_hazard {
-                    let should_cam = agent.cam_trigger.should_generate(
-                        now,
-                        agent.kinematics.position,
-                        agent.kinematics.speed,
-                        agent.kinematics.heading_deg,
-                    );
-                    if should_cam {
-                        let _ = agent.cam_transmission.generate_and_send_cam(
-                            &fix,
-                            now.to_millis(),
-                            1,
-                        );
-                    }
                 }
 
                 // Drain link layer cross-bridges (BTP <-> GN)
@@ -882,7 +828,7 @@ impl SimulationEngine {
         _sinr_db: f64,
         is_success: bool,
     ) -> SimResult<()> {
-        let now = self.scheduler.current_time();
+        let _now = self.scheduler.current_time();
         self.profiler.record_net_event();
 
         let sender_pos = self.agents.get(&sender_id).map(|a| a.kinematics.position);
@@ -950,42 +896,12 @@ impl SimulationEngine {
                 );
             }
 
-            // Process received DENMs
+            // Drain received DENMs
             while let Ok(denm) = agent.denm_rx.try_recv() {
-                let station_id = denm.header.station_id.0 as ActorId;
-                let is_ahead = agent.kinematics.leader_id == Some(station_id)
-                    || (station_id < receiver_id && self.config.workload == "eebl");
-                if is_ahead {
-                    let leader_gap = agent.kinematics.leader_distance.unwrap_or(20.0);
-                    let leader_speed = match denm.denm.location {
-                        Some(ref loc) => match loc.event_speed {
-                            Some(ref s) => s.speed_value.0 as f64 * 0.01,
-                            None => 0.0,
-                        },
-                        None => 0.0,
-                    };
-                    let t_hazard = SimTime::from_secs_f64(self.hazard_time_s);
-
-                    let act_res = agent.actuator.actuate_eebl_reaction(
-                        &mut agent.kinematics,
-                        leader_speed,
-                        leader_gap,
-                        t_hazard,
-                        now,
-                        self.config.mobility_step_s,
-                    );
-
-                    if act_res.is_collision {
-                        self.collision_count += 1;
-                    }
-
-                    // Synchronize immediately into trajectory model
-                    if let Some(veh) = self.trajectory.get_vehicle_mut(receiver_id) {
-                        veh.speed = agent.kinematics.speed;
-                        veh.acceleration = agent.kinematics.acceleration;
-                        veh.is_braking_hazard = true;
-                    }
-                }
+                info!(
+                    "[DENM RX] node={} <- sender={}",
+                    receiver_id, denm.header.station_id.0
+                );
             }
         }
 
@@ -1016,34 +932,6 @@ impl SimulationEngine {
         self.scheduler
             .schedule(next_update, 5, node_id, EventPayload::CbrUpdate { node_id })?;
 
-        Ok(())
-    }
-
-    fn handle_brake_actuation(
-        &mut self,
-        node_id: ActorId,
-        _leader_id: ActorId,
-        eebl_delivery_time: SimTime,
-        _decel_req: f64,
-    ) -> SimResult<()> {
-        if let Some(agent) = self.agents.get_mut(&node_id) {
-            let lead_speed = agent.kinematics.leader_speed.unwrap_or(0.0);
-            let lead_gap = agent.kinematics.leader_distance.unwrap_or(20.0);
-            let t_hazard = SimTime::from_secs_f64(self.hazard_time_s);
-
-            let act_res = agent.actuator.actuate_eebl_reaction(
-                &mut agent.kinematics,
-                lead_speed,
-                lead_gap,
-                t_hazard,
-                eebl_delivery_time,
-                self.config.mobility_step_s,
-            );
-
-            if act_res.is_collision {
-                self.collision_count += 1;
-            }
-        }
         Ok(())
     }
 }

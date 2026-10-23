@@ -23,8 +23,6 @@ pub struct Wifi80211bdConfig {
     pub cca_threshold_dbm: f64,
     /// Receiver power sensitivity cutoff in dBm
     pub min_power_dbm: f64,
-    /// Pure ALOHA mode bypass (for testing/benchmarks)
-    pub is_aloha: bool,
 }
 
 impl Default for Wifi80211bdConfig {
@@ -38,7 +36,6 @@ impl Default for Wifi80211bdConfig {
             tx_power_dbm: 23.0,
             cca_threshold_dbm: -85.0,
             min_power_dbm: -89.0,
-            is_aloha: false,
         }
     }
 }
@@ -55,7 +52,6 @@ impl Wifi80211bdConfig {
             tx_power_dbm: 23.0,
             cca_threshold_dbm: -85.0,
             min_power_dbm: -86.0,
-            is_aloha: false,
         }
     }
 
@@ -70,7 +66,6 @@ impl Wifi80211bdConfig {
             tx_power_dbm: 23.0,
             cca_threshold_dbm: -85.0,
             min_power_dbm: -89.0,
-            is_aloha: false,
         }
     }
 }

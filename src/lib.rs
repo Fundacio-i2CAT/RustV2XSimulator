@@ -10,7 +10,7 @@
 //! - [`mac`] — IEEE 802.11p EDCA 4 Access Categories and Channel Busy Ratio (CBR) monitor.
 //! - [`dcc`] — ETSI TS 102 687 Decentralized Congestion Control (Reactive FSM & Adaptive LIMERIC).
 //! - [`cits`] — Standard ETSI C-ITS stack: CAM, DENM, BTP, GeoNetworking, and LDM.
-//! - [`mobility`] — Microscopic vehicle mobility and Krauß-safe closed-loop ballistic actuation.
+//! - [`mobility`] — Microscopic vehicle mobility and synthetic trajectory sources.
 //! - [`pcap`] — Standard libpcap file export with Ethernet II / GeoNetworking framing.
 //! - [`engine`] — Unified discrete-event simulation engine orchestrator.
 //!
@@ -44,7 +44,7 @@ pub use common::{
 pub use dcc::{DccConfig, DccMode};
 pub use engine::{EngineConfig, SimulationEngine, VehicleAgent};
 pub use geometry::{BuildingMap, Point2D, SpatialIndex};
-pub use mobility::{ActuationMode, SyntheticMobilityType, TrajectorySource, VehicleKinematics};
+pub use mobility::{SyntheticMobilityType, TrajectorySource, VehicleKinematics};
 pub use phy::{PhyModelType, ReceptionResult, WirelessTechnology, WirelessTechnologyType};
 pub use scheduler::{CalendarQueue, DiscreteEventScheduler, Event, EventContext, EventPayload};
 
@@ -58,7 +58,7 @@ pub mod prelude {
     pub use crate::engine::{EngineConfig, SimulationEngine, VehicleAgent};
     pub use crate::geometry::{BuildingMap, Point2D, SpatialIndex};
     pub use crate::mobility::{
-        ActuationMode, SyntheticMobilityType, TrajectorySource, VehicleKinematics,
+        SyntheticMobilityType, TrajectorySource, VehicleKinematics,
     };
     pub use crate::phy::{
         PhyModelType, ReceptionResult, WirelessTechnology, WirelessTechnologyType,

@@ -18,10 +18,6 @@ pub struct VehicleKinematics {
     pub leader_distance: Option<f64>,
     pub leader_speed: Option<f64>,
     pub length_m: f64,
-    pub min_gap_m: f64,
-    pub max_decel: f64,
-    pub reaction_time_s: f64,
-    pub is_braking_hazard: bool,
 }
 
 impl VehicleKinematics {
@@ -38,10 +34,6 @@ impl VehicleKinematics {
             leader_distance: None,
             leader_speed: None,
             length_m: 5.0,
-            min_gap_m: 2.5,
-            max_decel: 6.0,
-            reaction_time_s: 0.1,
-            is_braking_hazard: false,
         }
     }
 

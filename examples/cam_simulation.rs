@@ -12,7 +12,6 @@ use rustv2xsimulator::common::SimResult;
 use rustv2xsimulator::dcc::dcc_profile::{DccConfig, DccMode};
 use rustv2xsimulator::engine::{EngineConfig, SimulationEngine};
 use rustv2xsimulator::geometry::polygon::BuildingMap;
-use rustv2xsimulator::mobility::krauss_actuation::ActuationMode;
 use rustv2xsimulator::mobility::trajectory_source::SyntheticMobilityType;
 use rustv2xsimulator::phy::radio_medium::PhyModelType;
 use rustv2xsimulator::phy::WirelessTechnologyType;
@@ -55,7 +54,7 @@ struct ExampleArgs {
     #[arg(long, alias = "traci-port", default_value_t = 8813)]
     traci_port: u16,
 
-    /// Simulation workload type: "cam", "cps", "eebl"
+    /// Simulation workload type: "cam"
     #[arg(short = 'w', long, default_value = "cam")]
     workload: String,
 
@@ -94,18 +93,6 @@ struct ExampleArgs {
     /// Simulation PRNG seed
     #[arg(long, default_value_t = 42)]
     seed: u64,
-
-    /// Force ALOHA random access MAC (disable EDCA contention/CSMA)
-    #[arg(long, default_value_t = false)]
-    aloha: bool,
-
-    /// Use all-pairs O(N^2) geometric search instead of k-d tree
-    #[arg(long, default_value_t = false)]
-    all_pairs: bool,
-
-    /// Actuation mode upon EEBL hazard: "krauss_substep", "quantized"
-    #[arg(long, default_value = "krauss_substep")]
-    actuation_mode: String,
 
     /// Disable ETSI TS 103 097 security layer (signing and verification)
     #[arg(long, default_value_t = false)]
@@ -161,8 +148,6 @@ fn main() -> SimResult<()> {
     engine_cfg.output_dir = args.output_dir;
     engine_cfg.enable_pcap = args.enable_pcap;
     engine_cfg.seed = args.seed;
-    engine_cfg.is_aloha_mac = args.aloha;
-    engine_cfg.is_all_pairs_geometry = args.all_pairs;
     engine_cfg.security_enabled = !args.no_security;
     engine_cfg.verify_packets = !args.no_security;
 
@@ -190,11 +175,6 @@ fn main() -> SimResult<()> {
         }
     };
     engine_cfg.mcs = args.mcs;
-
-    engine_cfg.actuation_mode = match args.actuation_mode.as_str() {
-        "quantized" => ActuationMode::Quantized,
-        _ => ActuationMode::KraussSubstep,
-    };
 
     let dcc_m = match args.dcc_mode.as_str() {
         "off" => DccMode::Disabled,

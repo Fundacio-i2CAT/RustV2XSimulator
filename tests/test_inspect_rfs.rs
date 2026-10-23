@@ -11,8 +11,10 @@ use rustflexstack::geonet::mib::Mib;
 use rustflexstack::geonet::position_vector::{LongPositionVector, Tst};
 use rustv2xsimulator::cits::geonet::GNRouter;
 
+use rustflexstack::facilities::decentralized_environmental_notification_service::{
+    denm_bindings::etsi_its_cdd::DangerousSituationSubCauseCode, denm_coder::*, DENRequest,
+};
 use rustv2xsimulator::cits::cam::{build_cam_btp_request, summarize_cam};
-use rustv2xsimulator::cits::denm::create_eebl_request;
 use rustv2xsimulator::cits::link_layer::SimulatorLinkLayer;
 use rustv2xsimulator::common::{SimTime, Wgs84Coordinate};
 use rustv2xsimulator::security::{GnSecurity, SimPki};
@@ -37,7 +39,6 @@ fn test_rustflexstack_full_stack_roundtrip() {
         gn_to_btp_rx_a,
         btp_handle_a.clone(),
         btp_to_gn_rx_a,
-        false,
     );
     let ldm_a = LdmFacility::new(413_851_000, 21_734_000, 2000.0);
     let mut loc_svc_a = LocationService::new();
@@ -77,7 +78,6 @@ fn test_rustflexstack_full_stack_roundtrip() {
         gn_to_btp_rx_b,
         btp_handle_b.clone(),
         btp_to_gn_rx_b,
-        false,
     );
     let ldm_b = LdmFacility::new(413_851_000, 21_734_000, 2000.0);
     let mut loc_svc_b = LocationService::new();
@@ -147,7 +147,18 @@ fn test_rustflexstack_full_stack_roundtrip() {
 
     // 4. Trigger a DENM transmission from Vehicle A
     let coord_a = Wgs84Coordinate::new(41.3851, 2.1734, 10.0);
-    let den_req = create_eebl_request(&coord_a, 15.0, 90.0);
+    let den_req = DENRequest {
+        event_latitude: coord_a.latitude,
+        event_longitude: coord_a.longitude,
+        event_altitude_m: coord_a.altitude,
+        cause_code: CauseCodeChoice::dangerousSituation99(DangerousSituationSubCauseCode(1)),
+        information_quality: 7,
+        event_speed_raw: 1500,
+        event_heading_raw: 900,
+        denm_interval_ms: 100,
+        time_period_ms: 5000,
+        relevance_radius_m: 1000,
+    };
     den_svc_a.send_single_denm(&den_req);
 
     // IMPORTANT: Update Vehicle B's ego position vector to Barcelona coordinates
@@ -227,7 +238,6 @@ fn test_rustflexstack_secured_roundtrip() {
         gn_to_btp_rx_a,
         btp_handle_a.clone(),
         btp_to_gn_rx_a,
-        false,
     );
     let ldm_a = LdmFacility::new(413_851_000, 21_734_000, 2000.0);
     let mut loc_svc_a = LocationService::new();
@@ -270,7 +280,6 @@ fn test_rustflexstack_secured_roundtrip() {
         gn_to_btp_rx_b,
         btp_handle_b.clone(),
         btp_to_gn_rx_b,
-        false,
     );
     let ldm_b = LdmFacility::new(413_851_000, 21_734_000, 2000.0);
     let mut loc_svc_b = LocationService::new();
@@ -348,7 +357,18 @@ fn test_rustflexstack_secured_roundtrip() {
 
     // 4. Trigger a secured DENM transmission from Vehicle A
     let coord_a = Wgs84Coordinate::new(41.3851, 2.1734, 10.0);
-    let den_req = create_eebl_request(&coord_a, 15.0, 90.0);
+    let den_req = DENRequest {
+        event_latitude: coord_a.latitude,
+        event_longitude: coord_a.longitude,
+        event_altitude_m: coord_a.altitude,
+        cause_code: CauseCodeChoice::dangerousSituation99(DangerousSituationSubCauseCode(1)),
+        information_quality: 7,
+        event_speed_raw: 1500,
+        event_heading_raw: 900,
+        denm_interval_ms: 100,
+        time_period_ms: 5000,
+        relevance_radius_m: 1000,
+    };
     den_svc_a.send_single_denm(&den_req);
 
     // Update Vehicle B's position vector so it lies inside the DENM broadcast circle

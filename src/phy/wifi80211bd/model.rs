@@ -28,7 +28,7 @@ pub struct Wifi80211bdModel {
 
 impl Wifi80211bdModel {
     pub fn new(config: Wifi80211bdConfig, sim_seed: u64) -> Self {
-        let mac = EdcaChannelAccess::new(config.is_aloha, config.cca_threshold_dbm);
+        let mac = EdcaChannelAccess::new(config.cca_threshold_dbm);
         let channel_monitor = ChannelMonitor::default();
         let decider = Decider80211bd::new(config.bandwidth_mhz, config.carrier_freq_hz);
         let medium = RadioMedium::new(PhyModelType::DualSlope, config.tx_power_dbm);
@@ -64,11 +64,7 @@ impl WirelessTechnology for Wifi80211bdModel {
         };
         self.mac.enqueue_packet(ac, frame, rng);
         if let Some((winning_ac, _)) = self.mac.poll_ready_transmission(rng) {
-            let backoff = if self.mac.is_aloha_mode {
-                SimTime::ZERO
-            } else {
-                self.mac.compute_backoff_delay(winning_ac, rng)
-            };
+            let backoff = self.mac.compute_backoff_delay(winning_ac, rng);
             Some(now + backoff)
         } else {
             None

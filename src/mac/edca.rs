@@ -118,7 +118,6 @@ impl EdcaQueue {
 /// 802.11p EDCA MAC Controller for a vehicular node.
 #[derive(Debug, Clone)]
 pub struct EdcaChannelAccess {
-    pub is_aloha_mode: bool,
     pub slot_time: SimTime,
     pub sifs: SimTime,
     pub cca_threshold_dbm: f64,
@@ -128,14 +127,13 @@ pub struct EdcaChannelAccess {
 
 impl Default for EdcaChannelAccess {
     fn default() -> Self {
-        Self::new(false, -85.0)
+        Self::new(-85.0)
     }
 }
 
 impl EdcaChannelAccess {
-    pub fn new(is_aloha_mode: bool, cca_threshold_dbm: f64) -> Self {
+    pub fn new(cca_threshold_dbm: f64) -> Self {
         Self {
-            is_aloha_mode,
             slot_time: SimTime::from_micros(13), // 13 us
             sifs: SimTime::from_micros(32),      // 32 us
             cca_threshold_dbm,
@@ -153,7 +151,7 @@ impl EdcaChannelAccess {
     pub fn enqueue_packet<R: Rng>(&mut self, ac: AccessCategory, frame: TxFrame, rng: &mut R) {
         let idx = ac as usize;
         self.queues[idx].enqueue(frame);
-        if self.queues[idx].state == MacState::Idle && !self.is_aloha_mode {
+        if self.queues[idx].state == MacState::Idle {
             self.queues[idx].start_backoff(rng);
         }
     }
@@ -219,7 +217,7 @@ mod tests {
 
     #[test]
     fn test_internal_contention_resolution() {
-        let mut mac = EdcaChannelAccess::new(false, -85.0);
+        let mut mac = EdcaChannelAccess::new(-85.0);
         let mut rng = StdRng::seed_from_u64(123);
 
         let f_cam = TxFrame {

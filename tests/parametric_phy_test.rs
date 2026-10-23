@@ -80,7 +80,7 @@ fn test_wireless_technology_trait_abstraction() {
     let mut rng = StdRng::seed_from_u64(42);
 
     // 1. DSRC 802.11p Model
-    let mut dsrc = Dsrc80211pModel::new(false, 23.0, 42);
+    let mut dsrc = Dsrc80211pModel::new(23.0, 42);
     assert_eq!(dsrc.name(), "IEEE_802_11p_DSRC");
 
     let frame = TxFrame {

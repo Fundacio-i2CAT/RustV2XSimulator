@@ -182,7 +182,6 @@ Every event possesses three ordering criteria:
    - If is_success == true:
        Passes payload to receiver's BTP/GeoNetworking stack.
        Updates receiver's Local Dynamic Map (LDM).
-       If EEBL emergency brake hazard DENM: injects instantaneous Krauss deceleration!
    - If is_success == false:
        Discards packet, records telemetry drop metrics.
 ```

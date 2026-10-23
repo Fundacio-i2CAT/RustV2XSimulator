@@ -27,6 +27,7 @@ RustFlexstack/
 results/
 site/
 aoi_benchmark/
+aoibenchmark/
 ignore/
 # LaTeX build artifacts
 *.aux

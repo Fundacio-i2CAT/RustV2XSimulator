@@ -22,7 +22,7 @@ cargo run --release --example cam_simulation -- [OPTIONS]
 | `--gui` | Flag | `false` | Launch SUMO GUI window for live visual simulation |
 | `--traci-host <HOST>` | String | `"127.0.0.1"` | TraCI socket server host |
 | `--traci-port <PORT>` | Integer | `8813` | TraCI socket server port |
-| `-w, --workload <TYPE>` | String | `"cam"` | Traffic workload: `"cam"`, `"cps"`, or `"eebl"` |
+| `-w, --workload <TYPE>` | String | `"cam"` | Traffic workload: `"cam"` |
 | `-n, --nodes <N>` | Integer | `5` | Number of vehicles to simulate (alias `--num-vehicles`) |
 | `-d, --duration <SECS>` | Float | `30.0` | Total simulation duration in seconds |
 | `--technology <TECH>` | String | `"11p"` | Wireless technology: `"11p"`, `"11bd"`, `"cv2x"`, `"nrv2x"`, or `"parametric"` |
@@ -30,9 +30,6 @@ cargo run --release --example cam_simulation -- [OPTIONS]
 | `--mcs <INDEX>` | Integer | `None` | MCS index override: 0..7 (11p), 0..9 (11bd), 0..28 (cv2x/nrv2x) |
 | `--dcc-mode <MODE>` | String | `"reactive"` | DCC mode: `"off"`, `"reactive"` (ETSI TS 102 687), or `"limeric"` |
 | `--mobility <SOURCE>` | String | `"sumo"` | Mobility source: `"sumo"`, `"urban"`, `"highway"`, or `"platoon"` |
-| `--aloha` | Flag | `false` | Force ALOHA random access MAC (bypasses EDCA backoff) |
-| `--all-pairs` | Flag | `false` | Use all-pairs $O(N^2)$ candidate search instead of KD-tree |
-| `--actuation-mode <MODE>` | String | `"krauss_substep"` | EEBL actuation mode: `"krauss_substep"` or `"quantized"` |
 | `--seed <U64>` | Integer | `42` | PRNG seed for deterministic reproducibility |
 | `--enable-pcap` | Flag | `false` | Generate Ethernet II PCAP packet trace (`simulation.pcap`, alias `--generate-pcap`) |
 | `-o, --output-dir <DIR>` | String | `"results/cam_example/"` | Output directory for simulation traces |

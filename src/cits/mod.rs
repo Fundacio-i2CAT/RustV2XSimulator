@@ -20,8 +20,7 @@ pub use cam::{
     CooperativeAwarenessBasicService, GpsFix, LocationService, VehicleData,
 };
 pub use denm::{
-    create_eebl_request, DENRequest, DecentralizedEnvironmentalNotificationService, Denm,
-    DenmCoder, CAUSE_CODE_EMERGENCY_BRAKE, SUBCAUSE_CODE_EEBL,
+    DENRequest, DecentralizedEnvironmentalNotificationService, Denm, DenmCoder,
 };
 pub use geonet::{
     create_long_position_vector, GNAddress, GNRouter, LongPositionVector, Mib, RouterHandle,

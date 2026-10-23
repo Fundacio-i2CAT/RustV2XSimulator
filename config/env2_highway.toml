@@ -47,12 +47,6 @@ beta = 0.0012
 min_rate_hz = 2.0
 max_rate_hz = 10.0
 
-[actuation]
-mode = "krauss_substep"
-max_decel = 7.0
-reaction_time_s = 0.1
-min_gap_m = 3.0
-
 [metrics]
 output_dir = "results/env2_highway/"
 export_csv = true

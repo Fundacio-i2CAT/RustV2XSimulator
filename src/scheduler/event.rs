@@ -34,13 +34,6 @@ pub enum EventPayload {
     DccEvaluate { node_id: ActorId },
     /// CAM generation timer event for a specific node.
     CamTrigger { node_id: ActorId },
-    /// Krauß-safe sub-step emergency brake actuation upon EEBL DENM reception.
-    KraussBrakeActuation {
-        node_id: ActorId,
-        leader_id: ActorId,
-        eebl_delivery_time: SimTime,
-        decel_req: f64,
-    },
     /// General timer / callback.
     Timer { token: u64 },
 }

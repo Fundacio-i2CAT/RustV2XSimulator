@@ -41,7 +41,7 @@ stateDiagram-v2
     state MobilityStep {
         SumoStep: Step SUMO TraCI / Synthetic Kinematics
         RebuildKD: Rebuild 2D Spatial KD-Tree
-        EvalTriggers: Check CAM kinematic triggers & EEBL alerts
+        EvalTriggers: Check CAM kinematic triggers
         QueueMAC: Enqueue outbound frames into EDCA queues
     }
     
@@ -58,7 +58,7 @@ stateDiagram-v2
     state PhyRxDelivery {
         CheckSuccess: Evaluate is_success
         InjectLink: Inject payload into receiver SimulatorLinkLayer
-        UpdateLDM: Update Local Dynamic Map & trigger actuation
+        UpdateLDM: Update Local Dynamic Map
     }
     
     MobilityStep --> CbrUpdate: Period: 100ms
@@ -73,7 +73,6 @@ stateDiagram-v2
 | **`MacTxStart`** | MAC backoff completion | Fired when an agent's CSMA/CA backoff countdown finishes. Marks channel busy on sender and candidate receivers; evaluates wireless channel in parallel via Rayon. |
 | **`PhyRxDelivery`** | PHY delivery timer | Scheduled at $t_{now} + \text{duration} + \text{delay}$. If reception was successful, delivers raw packet bytes to the receiving agent's GeoNetworking router. |
 | **`CbrUpdate`** | Periodic monitor | Evaluates Channel Busy Ratio (CBR) over a 100 ms sliding window in `ChannelMonitor` and feeds it to DCC rate controllers (Reactive FSM or LIMERIC). |
-| **`KraussBrakeActuation`** | EEBL receiver | Actuates emergency braking sub-stepping in `KraussSafeActuator` when a forward hazard DENM is received. |
 
 ---
 

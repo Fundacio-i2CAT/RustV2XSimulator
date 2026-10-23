@@ -48,7 +48,7 @@ flowchart TD
 | **Event Scheduling & Time** | `rustv2xsimulator::scheduler` | Deterministic, discrete-event calendar queue (`SimTime` in 100 ns ticks). |
 | **Wireless Channel & RF** | `rustv2xsimulator::phy` | Path loss (dual-slope), shadow fading, knife-edge diffraction, cumulative SINR. |
 | **Channel Access & Contention** | `rustv2xsimulator::mac` | IEEE 802.11p EDCA 4 Access Categories (`AC_VO`, `AC_VI`, `AC_BE`, `AC_BK`), CBR monitor. |
-| **Vehicular Mobility** | `rustv2xsimulator::mobility` | SUMO TraCI client, synthetic grid/highway/platoon generators, Krauß-safe actuation. |
+| **Vehicular Mobility** | `rustv2xsimulator::mobility` | SUMO TraCI client, synthetic grid/highway/platoon generators. |
 | **Packet Trace Capture** | `rustv2xsimulator::pcap` | High-speed libpcap export parseable directly in Wireshark (`0x8947`). |
 | **ETSI Protocol Layers** | `rustflexstack` | GeoNetworking (EN 302 636-4-1), BTP (EN 302 636-5-1), Facilities (TS 103 900), Security (TS 103 097). |
 | **Metrics & Research Logic** | **Downstream Repository** | PDR curves, throughput, latency distributions, paper-specific metrics collectors. |

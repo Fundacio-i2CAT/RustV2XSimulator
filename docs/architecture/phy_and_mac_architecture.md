@@ -37,7 +37,7 @@ sequenceDiagram
     
     Note over Engine,RxLink: 3. Reception Pipeline
     Engine->>RxLink: Event: PhyRxDelivery (if is_success == true)
-    RxLink->>App: Forward to GeoNetworking -> BTP -> Facility (LDM / EEBL)
+    RxLink->>App: Forward to GeoNetworking -> BTP -> Facility (LDM)
 ```
 
 ---
@@ -50,7 +50,6 @@ The MAC layer is implemented in [`src/mac/`](../../src/mac/mod.rs) and provides:
 2. **Internal contention resolution** between AC queues within the same node.
 3. **Backoff delay computation** and slot-based CSMA/CA countdown.
 4. **Channel Busy Ratio (CBR) monitoring** over sliding observation windows for Decentralized Congestion Control (DCC).
-5. **Unslotted ALOHA mode** option for ablation studies and baseline comparisons.
 
 ### 2.1. Access Categories & Contention Parameters
 
@@ -58,7 +57,7 @@ In IEEE 802.11p (10 MHz channel bandwidth in the 5.9 GHz ITS band), medium acces
 
 | Access Category | Identifier | Target Traffic Type | $AIFSN$ | $CW_{min}$ | $CW_{max}$ |
 | :--- | :--- | :--- | :---: | :---: | :---: |
-| **`VoiceSafety`** | `AC_VO` (0) | Emergency / High-Priority Safety (DENM, EEBL) | **2** | **3** | **7** |
+| **`VoiceSafety`** | `AC_VO` (0) | Emergency / High-Priority Safety (DENM) | **2** | **3** | **7** |
 | **`Video`** | `AC_VI` (1) | High-throughput video / perception sharing | **3** | **7** | **15** |
 | **`BestEffort`** | `AC_BE` (2) | Standard periodic Cooperative Awareness (CAM) | **6** | **15** | **1023** |
 | **`Background`** | `AC_BK` (3) | Non-safety background telemetry | **9** | **15** | **1023** |
